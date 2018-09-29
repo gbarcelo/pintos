@@ -4,9 +4,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )/src/utils"
 
 echo PATH="\"$PATH:$DIR\"" >> ~/.bashrc
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )/src/misc/gdb-macros"
+# DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )/src/misc/gdb-macros"
 
-sed -i -e "s#GDBMACROS=.*#GDBMACROS=$DIR#g" src/utils/pintos-gdb
+# sed -i -e "s#GDBMACROS=.*#GDBMACROS=$DIR#g" src/utils/pintos-gdb
 
 echo source \~/.bashrc | CLIP > /dev/null 2>&1
 echo source \~/.bashrc | clip.exe > /dev/null 2>&1
