@@ -2,10 +2,15 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )/src/utils"
 
-echo "PATH=\"$PATH:$DIR\"" >> ~/.bashrc
+echo PATH="\"$PATH:$DIR\"" >> ~/.bashrc
 
-source ~/.bashrc
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )/src/misc/gdb-macros"
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )/src/misc/"
+sed -i -e "s#GDBMACROS=.*#GDBMACROS=$DIR#g" src/utils/pintos-gdb
 
-sed -i -e "s#/usr/class/cs140/pintos/pintos/src/misc/#$DIR#g" src/utils/pintos-gdb
+echo source \~/.bashrc | CLIP > /dev/null 2>&1
+echo source \~/.bashrc | clip.exe > /dev/null 2>&1
+
+echo \"source \~/.bashrc\" has been placed on your clipboard for pasting.
+
+echo Note: You must enter \"source \~/.bashrc\" or restart your bash for changes to take effect. 
