@@ -1,0 +1,11 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )/src/utils"
+
+echo "PATH=\"$PATH:$DIR\"" >> ~/.bashrc
+
+source ~/.bashrc
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )/src/misc/"
+
+sed -i -e "s#/usr/class/cs140/pintos/pintos/src/misc/#$DIR#g" src/utils/pintos-gdb
