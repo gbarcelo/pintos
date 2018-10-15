@@ -1,7 +1,7 @@
 # Pint OS
 
-* Vanilla version as it appears directly after extraction
-* See https://web.stanford.edu/class/cs140/projects/pintos/pintos.html
+* Vanilla version as it appears directly after extraction, but after detailed EE468 changes
+* See https://web.stanford.edu/class/cs140/projects/pintos/pintos.html for original files and documentation
 
 Reminders:
 * Don't forget to change PATH directory to the appropriate path of src/utils before sourcing it
