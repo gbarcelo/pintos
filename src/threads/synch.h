@@ -20,15 +20,20 @@ void sema_self_test (void);
 /* Lock. */
 struct lock 
   {
+    uint32_t lock_id;
     struct thread *holder;      /* Thread holding lock (for debugging). */
     struct semaphore semaphore; /* Binary semaphore controlling access. */
+    struct list_elem elem;      /* Lock element */
   };
 
+extern struct list lock_list;
+  
 void lock_init (struct lock *);
 void lock_acquire (struct lock *);
 bool lock_try_acquire (struct lock *);
 void lock_release (struct lock *);
 bool lock_held_by_current_thread (const struct lock *);
+bool lock_contains(const struct lock *);
 
 /* Condition variable. */
 struct condition 
@@ -40,6 +45,11 @@ void cond_init (struct condition *);
 void cond_wait (struct condition *, struct lock *);
 void cond_signal (struct condition *, struct lock *);
 void cond_broadcast (struct condition *, struct lock *);
+
+/* Comparator used to find max priority thread in condvar list using list_max() */
+bool cond_comparator(const struct list_elem *a,
+                     const struct list_elem *b,
+                     void *aux);
 
 /* Optimization barrier.
 
