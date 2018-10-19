@@ -83,12 +83,17 @@ typedef int tid_t;
 struct thread
   {
     /* Owned by thread.c. */
-    tid_t tid;                          /* Thread identifier. */
-    enum thread_status status;          /* Thread state. */
-    char name[16];                      /* Name (for debugging purposes). */
-    uint8_t *stack;                     /* Saved stack pointer. */
-    int priority;                       /* Priority. */
-    struct list_elem allelem;           /* List element for all threads list. */
+    tid_t tid;                 /* Thread identifier. */
+    enum thread_status status; /* Thread state. */
+    char name[16];             /* Name (for debugging purposes). */
+    int64_t sleep_ticks;       /* Sleep time in terms of timer ticks */
+    int64_t sleep_start;       /* Start time of sleep */
+    bool is_sleeping;          /* True when the thread is sleeping */
+    uint8_t *stack;            /* Saved stack pointer. */
+    int priority;              /* Priority.Can change due to priority donation ! */
+    int priority_actual;       /* The actual priority, can change by thread_set_priority()*/
+    bool is_priority_donated;  /* true if priority donation has been done, or false */
+    struct list_elem allelem;  /* List element for all threads list. */
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
@@ -130,6 +135,9 @@ void thread_yield (void);
 typedef void thread_action_func (struct thread *t, void *aux);
 void thread_foreach (thread_action_func *, void *);
 
+/* Wakes up a sleeping thread */
+void check_sleeping_threads(struct thread *t, void *aux);
+
 int thread_get_priority (void);
 void thread_set_priority (int);
 
@@ -137,5 +145,11 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
+
+
+/* Comparator used to find max priority thread in list using list_max() */
+bool thread_priority_comparator(const struct list_elem *a,
+                                const struct list_elem *b,
+                                void *aux);
 
 #endif /* threads/thread.h */
