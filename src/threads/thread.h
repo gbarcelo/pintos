@@ -4,8 +4,6 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
-#include <kernel/list.h>
-#include <threads/synch.h>
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -95,23 +93,6 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
-    int64_t waketick;
-
-    bool success;
-    
-    int exit_error;
-
-    struct list child_proc;
-    struct thread* parent;
-
-    struct file *self;
-
-    struct list files;
-    int fd_count;
-
-    struct semaphore child_lock;
-    int waitingon;
-
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
@@ -120,13 +101,6 @@ struct thread
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   };
-
-  struct child {
-      int tid;
-      struct list_elem elem;
-      int exit_error;
-      bool used;
-    };
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
@@ -163,7 +137,5 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
-
-bool cmp_waketick(struct list_elem *first, struct list_elem *second, void *aux);
 
 #endif /* threads/thread.h */
