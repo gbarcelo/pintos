@@ -170,6 +170,7 @@ thread_tick (void)
     }
   }
 
+
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
@@ -533,6 +534,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->status = THREAD_BLOCKED;
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
+
   if(thread_mlfqs)
   {
     if(strcmp(t->name,"main")==0)
@@ -551,6 +553,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->blocked = NULL;
   list_init (&t->pot_donors);
   list_push_back (&all_list, &t->allelem);
+  
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
