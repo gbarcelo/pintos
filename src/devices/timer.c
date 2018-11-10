@@ -94,16 +94,22 @@ void
 timer_sleep (int64_t ticks)
 {
 
-    struct thread* curthread;
+	struct thread* curthread;
 	enum intr_level curlevel;
 
-    ASSERT (intr_get_level () == INTR_ON);
-    curlevel = intr_disable();
-    curthread = thread_current();
-    curthread->waketick = timer_ticks() + ticks;
-    list_insert_ordered (&sleep_list, &curthread->elem, cmp_waketick, NULL);
-    thread_block();
-    intr_set_level(curlevel);
+  ASSERT (intr_get_level () == INTR_ON);
+
+  curlevel = intr_disable();
+
+  curthread = thread_current();
+
+  curthread->waketick = timer_ticks() + ticks;
+
+  list_insert_ordered (&sleep_list, &curthread->elem, cmp_waketick, NULL);
+
+  thread_block();
+
+  intr_set_level(curlevel);
 
 }
 
