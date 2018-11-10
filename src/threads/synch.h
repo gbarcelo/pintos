@@ -41,11 +41,9 @@ void cond_wait (struct condition *, struct lock *);
 void cond_signal (struct condition *, struct lock *);
 void cond_broadcast (struct condition *, struct lock *);
 
-// a comparator used to find max priority thread in condvar list using list_max()
 bool cmp_cond_priority(struct list_elem *first, struct list_elem *second, void *aux);
 
 /* Optimization barrier.
-
    The compiler will not reorder operations across an
    optimization barrier.  See "Optimization Barriers" in the
    reference guide for more information.*/
