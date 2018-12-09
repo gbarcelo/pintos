@@ -2,9 +2,13 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include "userprog/gdt.h"
-#include "userprog/syscall.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
+#include "userprog/syscall.h"
+
+#include "vm/page.h"
+#include "vm/frame.h"
+#include "vm/swap.h"
 
 /* Number of page faults processed. */
 static long long page_fault_cnt;
@@ -14,18 +18,21 @@ static void page_fault (struct intr_frame *);
 
 /* Registers handlers for interrupts that can be caused by user
    programs.
+
    In a real Unix-like OS, most of these interrupts would be
    passed along to the user process in the form of signals, as
    described in [SV-386] 3-24 and 3-25, but we don't implement
    signals.  Instead, we'll make them simply kill the user
    process.
+
    Page faults are an exception.  Here they are treated the same
    way as other exceptions, but this will need to change to
    implement virtual memory.
+
    Refer to [IA32-v3a] section 5.15 "Exception and Interrupt
    Reference" for a description of each of these exceptions. */
 void
-exception_init (void)
+exception_init (void) 
 {
   /* These exceptions can be raised explicitly by a user program,
      e.g. via the INT, INT3, INTO, and BOUND instructions.  Thus,
@@ -60,14 +67,14 @@ exception_init (void)
 
 /* Prints exception statistics. */
 void
-exception_print_stats (void)
+exception_print_stats (void) 
 {
   printf ("Exception: %lld page faults\n", page_fault_cnt);
 }
 
 /* Handler for an exception (probably) caused by a user process. */
 static void
-kill (struct intr_frame *f)
+kill (struct intr_frame *f) 
 {
   /* This interrupt is one (probably) caused by a user process.
      For example, the process might have tried to access unmapped
@@ -76,7 +83,7 @@ kill (struct intr_frame *f)
      the kernel.  Real Unix-like operating systems pass most
      exceptions back to the process via signals, but we don't
      implement them. */
-
+     
   /* The interrupt frame's code segment value tells us where the
      exception originated. */
   switch (f->cs)
@@ -87,7 +94,7 @@ kill (struct intr_frame *f)
       printf ("%s: dying due to interrupt %#04x (%s).\n",
               thread_name (), f->vec_no, intr_name (f->vec_no));
       intr_dump_frame (f);
-      exit_proc(-1);
+      thread_exit (); 
 
     case SEL_KCSEG:
       /* Kernel's code segment, which indicates a kernel bug.
@@ -95,7 +102,7 @@ kill (struct intr_frame *f)
          may cause kernel exceptions--but they shouldn't arrive
          here.)  Panic the kernel to make the point.  */
       intr_dump_frame (f);
-      PANIC ("Kernel bug - unexpected interrupt in kernel");
+      PANIC ("Kernel bug - unexpected interrupt in kernel"); 
 
     default:
       /* Some other code segment?  Shouldn't happen.  Panic the
@@ -109,6 +116,7 @@ kill (struct intr_frame *f)
 /* Page fault handler.  This is a skeleton that must be filled in
    to implement virtual memory.  Some solutions to project 2 may
    also require modifying this code.
+
    At entry, the address that faulted is in CR2 (Control Register
    2) and information about the fault, formatted as described in
    the PF_* macros in exception.h, is in F's error_code member.  The
@@ -117,7 +125,7 @@ kill (struct intr_frame *f)
    description of "Interrupt 14--Page Fault Exception (#PF)" in
    [IA32-v3a] section 5.15 "Exception and Interrupt Reference". */
 static void
-page_fault (struct intr_frame *f)
+page_fault (struct intr_frame *f) 
 {
   bool not_present;  /* True: not-present page, false: writing r/o page. */
   bool write;        /* True: access was write, false: access was read. */
@@ -145,13 +153,54 @@ page_fault (struct intr_frame *f)
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
 
-  /* To implement virtual memory, delete the rest of the function
-     body, and replace it with code that brings in the page to
-     which fault_addr refers. */
-  printf ("Page fault at %p: %s error %s page in %s context.\n",
+
+  bool load_success = false;
+
+  if (not_present && fault_addr > USER_VADDR_BOTTOM && is_user_vaddr(fault_addr)) 
+  {
+    
+    // find the page
+    struct s_page_table_entry * s_pt_entry = get_s_pt_entry(fault_addr);
+
+    if (s_pt_entry != NULL) // load the page
+    {
+
+      if (s_pt_entry->type == PAGE_CODE) {
+        load_success = load_page_in_s_page_table(s_pt_entry);
+      } 
+      else if (s_pt_entry->type == PAGE_IN_SWAP) 
+      {
+        load_success = load_page_from_swap(s_pt_entry);
+      } 
+      else if (s_pt_entry->type == PAGE_MMAP) 
+      {
+        load_success = load_page_of_mmap (s_pt_entry);
+      }
+      
+      if(load_success==true) 
+      {
+        return;
+      }
+    }
+    else // the page is not in s_page_table, grow stack
+    {
+      // need to grow stack  
+      if (is_accessing_stack(fault_addr, f->esp))
+      {
+        load_success = grow_stack_one_page(fault_addr);
+      }
+    } 
+     
+  }
+
+  if (load_success == false) {
+    printf ("Page fault at %p: %s error %s page in %s context.\n",
           fault_addr,
           not_present ? "not present" : "rights violation",
           write ? "writing" : "reading",
           user ? "user" : "kernel");
-  kill (f);
+    kill (f);
+  }
+
 }
+
