@@ -24,6 +24,7 @@ test_main (void)
   exec_children ("child-syn-wrt", children, CHILD_CNT);
   wait_children (children, CHILD_CNT);
 
+  // printf("haha something...\n");
   CHECK ((fd = open (file_name)) > 1, "open \"%s\"", file_name);
   CHECK (read (fd, buf1, sizeof buf1) > 0, "read \"%s\"", file_name);
   random_bytes (buf2, sizeof buf2);

@@ -168,6 +168,15 @@ list_tail (struct list *list)
 void
 list_insert (struct list_elem *before, struct list_elem *elem)
 {
+  ASSERT (before != NULL);
+  ASSERT (elem != NULL);
+  
+  // ASSERT (!is_head (before));
+  // ASSERT (!is_front (before));
+
+  // ASSERT (!is_interior (before));
+  // ASSERT (!is_tail (before));
+
   ASSERT (is_interior (before) || is_tail (before));
   ASSERT (elem != NULL);
 

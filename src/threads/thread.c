@@ -15,6 +15,12 @@
 #include "userprog/process.h"
 #endif
 
+// vm
+#ifdef VM
+#include "vm/frame.h"
+#include "vm/page.h"
+#endif
+
 /* Random value for struct thread's `magic' member.
    Used to detect stack overflow.  See the big comment at the top
    of thread.h for details. */
@@ -93,6 +99,11 @@ thread_init (void)
   list_init (&ready_list);
   list_init (&all_list);
 
+  // vm
+  #ifdef VM
+  frame_table_init();
+  #endif
+
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
   init_thread (initial_thread, "main", PRI_DEFAULT);
@@ -167,6 +178,8 @@ thread_create (const char *name, int priority,
                thread_func *function, void *aux) 
 {
   struct thread *t;
+  struct process *p;
+  struct thread *cur;
   struct kernel_thread_frame *kf;
   struct switch_entry_frame *ef;
   struct switch_threads_frame *sf;
@@ -183,6 +196,37 @@ thread_create (const char *name, int priority,
   /* Initialize thread. */
   init_thread (t, name, priority);
   tid = t->tid = allocate_tid ();
+ // printf("create thread: %d\n", tid);
+
+#ifdef USERPROG
+  /* Allocate process info. */
+  p = malloc(sizeof(struct process));
+  if (p == NULL)
+    {
+      palloc_free_page (t);
+      return TID_ERROR;
+    }
+  p->status = PROCESS_RUN;
+  p->exit = -1;
+  p->pid = tid;
+  sema_init (&p->sema, 0);
+  lock_init (&p->status_lock);
+
+  t->proc = p;
+  list_init (&t->children);
+  cur = thread_current ();
+  list_push_back (&cur->children, &p->elem);
+#endif
+
+  // vm
+  list_init(&t->s_page_table);
+  lock_init (&t->s_page_table_lock);
+  // swap_init ();
+
+  // mmap
+  list_init (&t->mmap_file_list);
+  t->map_id = 0;
+
 
   /* Prepare thread for first run by initializing its stack.
      Do this atomically so intermediate values for the 'stack' 
@@ -300,6 +344,8 @@ thread_exit (void)
   intr_disable ();
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
+
+  
   schedule ();
   NOT_REACHED ();
 }
@@ -469,6 +515,17 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
+
+#ifdef USERPROG
+  list_init (&t->children);
+  list_init (&t->files);
+  t->fd = 2;
+#endif
+
+  
+
+
+
   list_push_back (&all_list, &t->allelem);
 }
 

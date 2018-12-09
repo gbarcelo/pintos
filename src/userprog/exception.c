@@ -4,6 +4,11 @@
 #include "userprog/gdt.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
+#include "userprog/syscall.h"
+
+#include "vm/page.h"
+#include "vm/frame.h"
+#include "vm/swap.h"
 
 /* Number of page faults processed. */
 static long long page_fault_cnt;
@@ -148,14 +153,54 @@ page_fault (struct intr_frame *f)
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
 
-  /* To implement virtual memory, delete the rest of the function
-     body, and replace it with code that brings in the page to
-     which fault_addr refers. */
-  printf ("Page fault at %p: %s error %s page in %s context.\n",
+
+  bool load_success = false;
+
+  if (not_present && fault_addr > USER_VADDR_BOTTOM && is_user_vaddr(fault_addr)) 
+  {
+    
+    // find the page
+    struct s_page_table_entry * s_pt_entry = get_s_pt_entry(fault_addr);
+
+    if (s_pt_entry != NULL) // load the page
+    {
+
+      if (s_pt_entry->type == PAGE_CODE) {
+        load_success = load_page_in_s_page_table(s_pt_entry);
+      } 
+      else if (s_pt_entry->type == PAGE_IN_SWAP) 
+      {
+        load_success = load_page_from_swap(s_pt_entry);
+      } 
+      else if (s_pt_entry->type == PAGE_MMAP) 
+      {
+        load_success = load_page_of_mmap (s_pt_entry);
+      }
+      
+      if(load_success==true) 
+      {
+        return;
+      }
+    }
+    else // the page is not in s_page_table, grow stack
+    {
+      // need to grow stack  
+      if (is_accessing_stack(fault_addr, f->esp))
+      {
+        load_success = grow_stack_one_page(fault_addr);
+      }
+    } 
+     
+  }
+
+  if (load_success == false) {
+    printf ("Page fault at %p: %s error %s page in %s context.\n",
           fault_addr,
           not_present ? "not present" : "rights violation",
           write ? "writing" : "reading",
           user ? "user" : "kernel");
-  kill (f);
+    kill (f);
+  }
+
 }
 

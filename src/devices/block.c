@@ -133,9 +133,13 @@ block_read (struct block *block, block_sector_t sector, void *buffer)
 void
 block_write (struct block *block, block_sector_t sector, const void *buffer)
 {
+  // printf("inside block write...\n");
   check_sector (block, sector);
+  // printf("passed check_sector..\n");
   ASSERT (block->type != BLOCK_FOREIGN);
+  // printf("now do write...\n");
   block->ops->write (block->aux, sector, buffer);
+  // printf("write done...\n");
   block->write_cnt++;
 }
 
@@ -177,6 +181,7 @@ block_print_stats (void)
         }
     }
 }
+
 
 /* Registers a new block device with the given NAME.  If
    EXTRA_INFO is non-null, it is printed as part of a user

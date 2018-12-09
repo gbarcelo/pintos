@@ -22,9 +22,11 @@ test_main (void)
   CHECK ((handle = open ("sample.txt")) > 1, "open \"sample.txt\"");
   CHECK ((map = mmap (handle, ACTUAL)) != MAP_FAILED, "mmap \"sample.txt\"");
   memcpy (ACTUAL, sample, strlen (sample));
+  // printf("length : %d \n", strlen (sample));
   munmap (map);
 
   /* Read back via read(). */
+  // printf("read?? : %d \n", read (handle, buf, strlen (sample)) );
   read (handle, buf, strlen (sample));
   CHECK (!memcmp (buf, sample, strlen (sample)),
          "compare read data against written data");
